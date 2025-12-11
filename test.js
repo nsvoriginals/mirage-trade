@@ -14,7 +14,7 @@ const symbols = [
   "linkusdt",
 ];
 
- function initBinanceFeed() {
+export function initBinanceFeed() {
   const stream = symbols.map(s => `${s}@ticker`).join("/");
   const ws = new WebSocket(`wss://stream.binance.com:9443/stream?streams=${stream}`);
 
