@@ -12,51 +12,62 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.createPortfolio = createPortfolio;
 exports.getPortfolio = getPortfolio;
-exports.getHoldings = getHoldings;
 const prisma_config_1 = __importDefault(require("../config/prisma.config"));
-function getPortfolio(userId) {
+const marketData_service_1 = require("./marketData.service");
+function createPortfolio(userId) {
     return __awaiter(this, void 0, void 0, function* () {
-        console.log(`🔍 [getPortfolio] Looking up portfolio for userId: ${userId}`);
-        if (!userId) {
-            console.error("❌ [getPortfolio] userId is missing");
-            throw new Error("User ID is required to fetch portfolio");
-        }
         try {
-            const portfolio = yield prisma_config_1.default.portfolio.findUnique({
-                where: { userId },
-                include: {
-                    orders: true,
-                },
+            const portfolio = yield prisma_config_1.default.portfolio.create({
+                data: {
+                    userId,
+                    cashBalance: 100000,
+                    totalValue: 100000,
+                    initialBalance: 100000,
+                }
             });
-            console.log("✅ [getPortfolio] Result:", portfolio);
-            return portfolio;
+            if (!portfolio) {
+                throw new Error("Portfolio not created");
+            }
         }
-        catch (error) {
-            console.error("❌ [getPortfolio] Prisma Error:", error.message);
-            console.error(error.stack);
-            throw new Error("Failed to fetch portfolio");
+        catch (e) {
+            console.log("errors occured");
         }
     });
 }
-function getHoldings(portfolioId) {
+function getPortfolio(userId) {
     return __awaiter(this, void 0, void 0, function* () {
-        console.log(`🔍 [getHoldings] Fetching holdings for portfolioId: ${portfolioId}`);
-        if (!portfolioId) {
-            console.error("❌ [getHoldings] portfolioId is missing");
-            throw new Error("Portfolio ID is required to fetch holdings");
+        const portfolio = yield prisma_config_1.default.portfolio.findUnique({
+            where: { userId },
+            include: { holdings: true },
+        });
+        if (!portfolio) {
+            throw new Error("Portfolio not found");
         }
-        try {
-            const holdings = yield prisma_config_1.default.holding.findMany({
-                where: { portfolioId },
-            });
-            console.log("✅ [getHoldings] Result:", holdings);
-            return holdings;
-        }
-        catch (error) {
-            console.error("❌ [getHoldings] Prisma Error:", error.message);
-            console.error(error.stack);
-            throw new Error("Failed to fetch holdings");
-        }
+        const computed = yield computeLatestPortfolio(portfolio);
+        return computed;
+    });
+}
+function computeLatestPortfolio(portfolio) {
+    return __awaiter(this, void 0, void 0, function* () {
+        let holdingsValue = 0;
+        const holdingsWithValue = yield Promise.all(portfolio.holdings.map((holding) => __awaiter(this, void 0, void 0, function* () {
+            const price = yield (0, marketData_service_1.getCryptoPrice)(holding.symbol);
+            const currentValue = holding.quantity * price;
+            const investedValue = holding.quantity * holding.avgCost;
+            holdingsValue += currentValue;
+            return Object.assign(Object.assign({}, holding), { currentPrice: price, currentValue, pnl: currentValue - investedValue });
+        })));
+        const totalValue = portfolio.cashBalance + holdingsValue;
+        return {
+            id: portfolio.id,
+            cashBalance: portfolio.cashBalance,
+            totalValue,
+            totalReturn: ((totalValue - portfolio.initialBalance) /
+                portfolio.initialBalance) *
+                100,
+            holdings: holdingsWithValue,
+        };
     });
 }

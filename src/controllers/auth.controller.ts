@@ -2,6 +2,7 @@ import { login,register,me } from "../services/auth.service";
 import { Request,Response } from "express";
 import jwt from 'jsonwebtoken'
 import dotenv from 'dotenv'
+import { createPortfolio } from "../services/portfolio.service";
 dotenv.config()
 const secret=process.env.JWT_SECRET || "testsecret"
 
@@ -46,14 +47,15 @@ export async function loginController(req:Request<{},{},LoginRequest>,res:Respon
 export async function registerController(req:Request<{},{},RegisterRequest>,res:Response){
     const { email,username,password}=req.body;
     const user = await register(email,username,password);
-    if(user){
+    if(!user){
        return res.status(400).json({
             message:"User already exists"
         })
     }
+    await createPortfolio(user.newUser.id)
     return res.status(200).json({
         message:"Registration Successful",
-        user
+        user:user.newUser
     })
 }
 

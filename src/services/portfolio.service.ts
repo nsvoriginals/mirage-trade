@@ -1,49 +1,73 @@
 import prisma from "../config/prisma.config";
+import { getCryptoPrice } from "./marketData.service";
+import { Portfolio } from "../types/types";
 
+
+
+export async function createPortfolio(userId: string) {
+  try {
+    const portfolio = await prisma.portfolio.create({
+      data: {
+        userId,
+        cashBalance: 100000,
+        totalValue: 100000,
+        initialBalance: 100000,
+      }
+    });
+    if (!portfolio) {
+      throw new Error("Portfolio not created")
+    }
+  } catch (e) {
+    console.log("errors occured");
+  }
+}
 export async function getPortfolio(userId: string) {
-  console.log(`🔍 [getPortfolio] Looking up portfolio for userId: ${userId}`);
+  const portfolio = await prisma.portfolio.findUnique({
+    where: { userId },
+    include: { holdings: true },
+  });
 
-  if (!userId) {
-    console.error("❌ [getPortfolio] userId is missing");
-    throw new Error("User ID is required to fetch portfolio");
+  if (!portfolio) {
+    throw new Error("Portfolio not found");
   }
 
-  try {
-    const portfolio = await prisma.portfolio.findUnique({
-      where: { userId },
-      include: {
-
-        orders: true,
-      },
-    });
-
-    console.log("✅ [getPortfolio] Result:", portfolio);
-    return portfolio;
-  } catch (error: any) {
-    console.error("❌ [getPortfolio] Prisma Error:", error.message);
-    console.error(error.stack);
-    throw new Error("Failed to fetch portfolio");
-  }
+  const computed = await computeLatestPortfolio(portfolio);
+  return computed;
 }
 
-export async function getHoldings(portfolioId: string) {
-  console.log(`🔍 [getHoldings] Fetching holdings for portfolioId: ${portfolioId}`);
 
-  if (!portfolioId) {
-    console.error("❌ [getHoldings] portfolioId is missing");
-    throw new Error("Portfolio ID is required to fetch holdings");
-  }
 
-  try {
-    const holdings = await prisma.holding.findMany({
-      where: { portfolioId },
-    });
+async function computeLatestPortfolio(portfolio: any) {
+  let holdingsValue = 0;
 
-    console.log("✅ [getHoldings] Result:", holdings);
-    return holdings;
-  } catch (error: any) {
-    console.error("❌ [getHoldings] Prisma Error:", error.message);
-    console.error(error.stack);
-    throw new Error("Failed to fetch holdings");
-  }
+  const holdingsWithValue = await Promise.all(
+    portfolio.holdings.map(async (holding: any) => {
+      const price = await getCryptoPrice(holding.symbol);
+      const currentValue = holding.quantity * price!;
+      const investedValue = holding.quantity * holding.avgCost;
+
+      holdingsValue += currentValue;
+
+      return {
+        ...holding,
+        currentPrice: price,
+        currentValue,
+        pnl: currentValue - investedValue,
+      };
+    })
+  );
+
+  const totalValue = portfolio.cashBalance + holdingsValue;
+
+  return {
+    id: portfolio.id,
+    cashBalance: portfolio.cashBalance,
+    totalValue,
+    totalReturn:
+      ((totalValue - portfolio.initialBalance) /
+        portfolio.initialBalance) *
+      100,
+    holdings: holdingsWithValue,
+  };
 }
+

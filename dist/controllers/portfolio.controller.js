@@ -9,57 +9,37 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.portfolioController = portfolioController;
-exports.holdingController = holdingController;
+exports.createPortfolioController = createPortfolioController;
+exports.getPortfolioController = getPortfolioController;
 const portfolio_service_1 = require("../services/portfolio.service");
-function portfolioController(req, res) {
+function createPortfolioController(req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
-        const userId = req.user.id;
         try {
-            const portfolioDetails = yield (0, portfolio_service_1.getPortfolio)(userId);
-            if (!portfolioDetails) {
-                return res.status(400).json({
-                    message: "Portfolio Details not found"
-                });
-            }
-            return res.status(200).json({
-                message: "Portfolio detailes fetched successfully",
-                portfolioDetails,
-                id: portfolioDetails.id
+            const userId = req.user.id;
+            const portfolio = yield (0, portfolio_service_1.createPortfolio)(userId);
+            return res.status(201).json({
+                success: true,
+                message: "Portfolio created successfully",
+                data: portfolio,
             });
         }
-        catch (e) {
-            res.status(500).json({
-                message: "Internal Server Error"
-            });
+        catch (err) {
+            next(err);
         }
     });
 }
-function holdingController(req, res) {
+function getPortfolioController(req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
-        const userId = req.user.id;
         try {
-            const portfolioDetails = yield (0, portfolio_service_1.getPortfolio)(userId);
-            if (!portfolioDetails) {
-                return res.status(400).json({
-                    message: "Portfolio Details not found"
-                });
-            }
-            const holdingDetails = yield (0, portfolio_service_1.getHoldings)(portfolioDetails.id);
-            if (!holdingDetails) {
-                return res.status(400).json({
-                    message: "Portfolio Details not found"
-                });
-            }
+            const userId = req.user.id;
+            const portfolio = yield (0, portfolio_service_1.getPortfolio)(userId);
             return res.status(200).json({
-                message: "Portfolio detailes fetched successfully",
-                holdingDetails,
+                success: true,
+                data: portfolio,
             });
         }
-        catch (e) {
-            res.status(500).json({
-                message: "Internal Server Error"
-            });
+        catch (err) {
+            next(err);
         }
     });
 }

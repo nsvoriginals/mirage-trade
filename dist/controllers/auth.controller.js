@@ -18,6 +18,7 @@ exports.meController = meController;
 const auth_service_1 = require("../services/auth.service");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const dotenv_1 = __importDefault(require("dotenv"));
+const portfolio_service_1 = require("../services/portfolio.service");
 dotenv_1.default.config();
 const secret = process.env.JWT_SECRET || "testsecret";
 function loginController(req, res) {
@@ -42,14 +43,15 @@ function registerController(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         const { email, username, password } = req.body;
         const user = yield (0, auth_service_1.register)(email, username, password);
-        if (user) {
+        if (!user) {
             return res.status(400).json({
                 message: "User already exists"
             });
         }
+        yield (0, portfolio_service_1.createPortfolio)(user.newUser.id);
         return res.status(200).json({
             message: "Registration Successful",
-            user
+            user: user.newUser
         });
     });
 }

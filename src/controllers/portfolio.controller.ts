@@ -1,56 +1,41 @@
-import { Request,Response } from "express";
-import { getHoldings, getPortfolio } from "../services/portfolio.service";
+import { Request, Response, NextFunction } from "express";
+import { createPortfolio, getPortfolio } from "../services/portfolio.service";
 
+export async function createPortfolioController(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const userId = req.user.id; 
 
+    const portfolio = await createPortfolio(userId);
 
-export async function portfolioController(req:  Request & { user?: any } ,res:Response){
-    const userId=req.user.id;
-
-    try{
-        const portfolioDetails=await getPortfolio(userId);
-        if(!portfolioDetails){
-            return res.status(400).json({
-                message:"Portfolio Details not found"
-            });
-        }
-        return res.status(200).json({
-            message:"Portfolio detailes fetched successfully",
-            portfolioDetails,
-            id:portfolioDetails.id
-        })
-        
-    }catch(e){ 
-          res.status(500).json({
-            message:"Internal Server Error"
-          })
-    }
+    return res.status(201).json({
+      success: true,
+      message: "Portfolio created successfully",
+      data: portfolio,
+    });
+  } catch (err) {
+    next(err);
+  }
 }
 
-export async function holdingController(req: Request & { user?: any },res:Response){
-     const userId=req.user.id;
+export async function getPortfolioController(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const userId = req.user.id;
 
-    try{
-         const portfolioDetails=await getPortfolio(userId);
-        if(!portfolioDetails){
-            return res.status(400).json({
-                message:"Portfolio Details not found"
-            });
-        }
-        const holdingDetails=await getHoldings(portfolioDetails.id);
-        if(!holdingDetails){
-            return res.status(400).json({
-                message:"Portfolio Details not found"
-            });
-        }
-        return res.status(200).json({
-            message:"Portfolio detailes fetched successfully",
-            holdingDetails,
-        })
-        
-    }catch(e){ 
-          res.status(500).json({
-            message:"Internal Server Error"
-          })
-    }
+    const portfolio = await getPortfolio(userId);
+
+    return res.status(200).json({
+      success: true,
+      data: portfolio,
+    });
+  } catch (err) {
+    next(err);
+  }
 }
-

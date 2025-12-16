@@ -1,10 +1,13 @@
-import express from 'express';
-import { holdingController, portfolioController } from '../controllers/portfolio.controller';
-import authMiddleware from '../middlewares/auth.middleware';
+import { Router } from "express";
+import {
+  createPortfolioController,
+  getPortfolioController,
+} from "../controllers/portfolio.controller";
+import authMiddleware from "../middlewares/auth.middleware";
 
-const router = express.Router();
+const router = Router();
 
-router.get('/',authMiddleware,portfolioController);
-router.get('/holdings',authMiddleware,holdingController)
+router.post("/", authMiddleware, createPortfolioController);
+router.get("/", authMiddleware, getPortfolioController);
 
 export default router;
