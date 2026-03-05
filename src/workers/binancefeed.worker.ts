@@ -37,7 +37,7 @@ export default async function initBinanceFeed() {
 
     await redisClient.hSet("crypto:prices", symbol, price);
 
-    console.log(`[CRYPTO] ${symbol}: ${price}`);
+   // console.log(`[CRYPTO] ${symbol}: ${price}`);
   });
 
   ws.on("close", () => {

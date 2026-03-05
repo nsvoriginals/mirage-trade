@@ -1,7 +1,7 @@
 import { createClient } from "redis";
 
 export const redisClient = createClient({
-  url: "rediss://default:ATzdAAIncDE3NTRlN2JlMjc5YzE0MDNhYmQ3MmI0MDkwN2M1OWFiN3AxMTU1ODE@cuddly-wren-15581.upstash.io:6379",
+  url: "rediss://default:AflsAAIncDIwNDExODI2NWU4ZDk0MzdlODhmNDkyNWJkZThmNzMzM3AyNjM4NTI@wise-leopard-63852.upstash.io:6379",
 });
 
 redisClient.on("error", (err) => {

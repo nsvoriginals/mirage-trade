@@ -16,6 +16,7 @@ exports.login = login;
 exports.register = register;
 exports.me = me;
 const prisma_config_1 = __importDefault(require("../config/prisma.config"));
+const portfolio_service_1 = require("./portfolio.service");
 function login(email, password) {
     return __awaiter(this, void 0, void 0, function* () {
         const user = yield prisma_config_1.default.user.findUnique({
@@ -46,6 +47,7 @@ function register(email, username, password) {
                 password
             }
         });
+        yield (0, portfolio_service_1.createPortfolio)(newUser.id);
         return { message: "Registration Successful", newUser };
     });
 }

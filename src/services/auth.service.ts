@@ -1,4 +1,5 @@
 import prisma from '../config/prisma.config'
+import { createPortfolio } from './portfolio.service';
 
 
 export async function login(email:string,password:string){
@@ -30,6 +31,8 @@ export async function register(email:string,username:string,password:string){
                 password
             }
          })
+
+        await createPortfolio(newUser.id)
          return {message:"Registration Successful",newUser}
 }
 
