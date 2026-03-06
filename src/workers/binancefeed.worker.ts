@@ -34,7 +34,7 @@ export default async function initBinanceFeed(): Promise<void> {
   await connectRedis();
 
   const stream: string = symbols.map(s => `${s}@ticker`).join("/");
-  const wsUrl: string = `wss://stream.binance.com:9443/stream?streams=${stream}`;
+  const wsUrl: string = `wss://stream.binance.us:9443/stream?streams=${stream}`;
   
   console.log(`Attempting to connect to Binance: ${wsUrl}`);
   
